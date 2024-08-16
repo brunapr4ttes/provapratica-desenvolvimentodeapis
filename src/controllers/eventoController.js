@@ -72,3 +72,97 @@ export const criarEvento = (request, response) => {
         })
     })
 }
+
+export const editEvento = (request, response) => {
+    
+    const {eventoId} = request.params;
+
+    try{
+
+        const {titulo, dataEvento, palestranteId} = request.body;
+
+        if(!titulo){
+            return response.status(400).json({message: "O título é obrigatorio!"});
+        }
+
+        if(!dataEvento){
+            return response.status(400).json({message: "A data é obrigatorio!"});
+        }
+
+        if(!palestranteId){
+            return response.status(400).json({message: "O palestrante é obrigatorio!"});
+        }
+
+        const checkSQL = /*sql*/`
+            SELECT * FROM eventos
+            WHERE ?? = ?
+        `
+        const checkData = ['eventoId', eventoId];
+
+        conn.query(checkSQL, checkData, (err, data) => {
+            if(err){
+                console.error(err)
+                return response.status(500).json({err: "Erro ao localizar o evento!"})
+            }
+
+            if(data.length == 0) {
+                response.status(404).json({message: "evento não encontrado"});
+            }
+    
+
+                const updateSQL = /*sql*/ `
+                    UPDATE eventos
+                    SET ?? = ?, ?? = ?, ?? = ? WHERE ?? = ?
+                `
+                const updateData = ["titulo", titulo, "dataEvento", dataEvento ,"palestranteId",  palestranteId, "eventoId", eventoId];
+                conn.query(updateSQL, updateData, (err) => {
+                    if(err){
+                        console.error(err)
+                        return response.status(500).json({err: "Erro ao localizar o evento!"})
+                    }
+
+                    response.status(200).json({message: "Evento atualizado!"})
+                })
+            })
+        } catch (error) {
+            console.error(error)
+            response.
+                status(error.status || 500).
+                json({
+                    message: error.message || "Erro interno no servidor"
+                });
+            return
+        }
+}
+    
+export const deleteEvento = (request, response) =>{
+    const {eventoId} = request.params
+
+
+    const deleteFeedbackSql = /*sql*/ `DELETE FROM feedback WHERE eventoId = "${eventoId}"`
+    
+    conn.query(deleteFeedbackSql, (err, info)=>{
+        if(err){
+            console.error(err)
+            response.status(500).json({message: "Erro ao deletar feedback"})
+            return  
+        }
+    })
+
+    const deleteSql = /*sql*/ `DELETE FROM eventos WHERE eventoId = "${eventoId}"`
+    
+    conn.query(deleteSql, (err, info)=>{
+        if(err){
+            console.error(err)
+            response.status(500).json({message: "Erro ao deletar evento"})
+            return  
+        }
+
+        if(info.affectedRows === 0){
+            response.status(404).json({message: "Evento não encontrado"})
+            return
+        }
+
+        response.status(200).json({message: "Evento Selecionado foi deletado"})
+    })
+}
